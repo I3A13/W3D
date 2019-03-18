@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<title>Hw1 Demo</title>
+	</head>
+	<body>
+		<div>
+		  <img src="https://i.imgur.com/hqZqXii.jpg" style="position:absolute;top:0vw;left:0vw;width:100vw;z-index:-1">
+		</div>
+		<button class="btn" id="demo">ON/OFF</button>
+		<script>
+			class Light {
+  
+			  constructor(lightId) {  
+				this.element = document.createElement ('div');
+				this.element.id = 'lightId';
+				document.getElementsByTagName('body')[0].appendChild(this.element);
+			  }
+				
+				changeColor() {
+					var self = this;
+				var hue = Math.random()*200;
+				var cycle = (Math.random() + 1) * 1000
+				self.element.style.background = "hsl(" + hue + ", 43%, 51%)";  
+				setTimeout (function() { self.changeColor() } , cycle);
+			  }
+
+			}
+
+			init();
+
+			var status1 = false;
+			  document.getElementById("demo").onclick = function A() {
+				status1 = !status1;
+				init();
+			  }
+			function init() {
+				var light;
+				
+			  for(i =35, j = 35,id = 0, t = 4; t <= 7;i+=20, j-=5, t++)
+				for(x = i, y = j, count = 0; count < t; x+=5, y+= 10, id++, count++){
+				  light = new Light(id);
+				  light.element.style.cssText = "position:absolute;width:15px;height:15px;border-radius:15px;z-index:1"; 
+				  light.element.style.top = x+'vw';
+				  light.element.style.left = y + 'vw';
+				  if(!status1)light.element.style.background = "hsl(250, 0%, 32%)";
+					else light.changeColor();
+				}
+				
+			}
+
+
+
+		</script>
+	</body>
+</html>
