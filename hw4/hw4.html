@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			body{
+				margin: 0;
+			}
+			#header{	
+				position: absolute;
+				width: 100vw;
+				height: 15vh;
+				text-align: center;
+				font-size: 30px;
+			}
+			#screen{
+				position: absolute;
+				width: 70vw;
+				height: 80vh;
+				top: 15vh;
+			}
+			#control{
+				position: absolute;
+				width: 30vw;
+				height: 80vh;
+				left: 80vw;
+				top: 15vh;
+				font-size: 30px;
+			}
+			
+		</style>
+	</head>
+	<body>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/100/three.min.js"></script>
+        <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+        <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+		<div id="header"><h2>HW4</h2></div>
+		<div id="screen"></div>
+		<div id="control">
+			Radius <input type="range" min="1" max="10" step="1" id='intensity' value="5">
+			<div id="hit"></div>
+		</div>
+		
+		<script>
+			var renderer,scene,camera;
+			var circle, v;
+			var rect;
+			var raycaster = new THREE.Raycaster();
+      var mouse = new THREE.Vector2();
+      var pick = [];
+			var hitDom = $('#hit');
+			var R = 3;
+			
+			init();
+			animate();
+			//方塊活動
+			$('#screen').click(function(e){
+				mouse.x = ((e.pageX - $('#screen').position().left) / $('#screen').width()) * 2 - 1;
+				mouse.y = -((e.pageY - $('#screen').position().top) / $('#screen').height()) * 2 + 1;
+				raycaster.setFromCamera(mouse,camera);
+				
+				let intersects = raycaster.intersectObjects(pick);
+				if(intersects.length > 0){
+					rect.position.copy(intersects[0].point);
+				}
+      });
+			//調整球大小
+			$('#intensity').click(function(e){
+				R = parseInt($('#intensity').val());
+				circle.scale.set(R,R,1);
+			})
+      
+			function init(){
+				let screen = document.getElementById('screen');
+				renderer = new THREE.WebGLRenderer();
+				renderer.setSize(screen.offsetWidth,screen.offsetHeight);
+				renderer.setClearColor(0x888888);
+				screen.appendChild(renderer.domElement);
+				scene = new THREE.Scene();
+				camera = new THREE.PerspectiveCamera(50,screen.offsetWidth / screen.offsetHeight,1,1000);
+				camera.position.set(0,0,150);
+        //網格
+				let grid = new THREE.GridHelper(1000,100,'#ff0000','#000019');
+				grid.rotation.x = Math.PI / 2;
+				scene.add(grid);
+				//牆	
+				var walls = new Array(4);
+        //wall1
+				walls[0] = new THREE.Mesh(new THREE.BoxGeometry(2,100,1),new THREE.MeshNormalMaterial());
+				scene.add(walls[0]);
+				walls[0].position.set(50,0,0);
+        //wall2
+				walls[1] = new THREE.Mesh(new THREE.BoxGeometry(2,100,1),new THREE.MeshNormalMaterial());
+				scene.add(walls[1]);
+				walls[1].position.set(-50,0,0);
+				//wall3
+        walls[2] = new THREE.Mesh(new THREE.BoxGeometry(100,2,1),new THREE.MeshNormalMaterial());
+				scene.add(walls[2]);
+				walls[2].position.set(0,50,0);
+				//wall4
+        walls[3] = new THREE.Mesh(new THREE.BoxGeometry(100,2,1),new THREE.MeshNormalMaterial());
+				scene.add(walls[3]);
+				walls[3].position.set(0,-50,0);
+				//球
+				circle = new THREE.Mesh(new THREE.CircleGeometry(1,32),new THREE.MeshBasicMaterial({color: 0x0000ff}));
+				circle.scale.set(R,R,1);
+				scene.add(circle);
+        circle.position.set(100*(0.5-Math.random()),100*(0.5-Math.random()),0);
+				v = new THREE.Vector3(Math.random(),Math.random(),0);
+				//方塊
+				rect = new THREE.Mesh(new THREE.BoxGeometry(20,10,1),new THREE.MeshNormalMaterial());
+				scene.add(rect);
+        var plane = new THREE.Mesh(new THREE.PlaneGeometry(100,100), new THREE.MeshBasicMaterial({opacity: 0.3,transparent: true}))
+				scene.add(plane);
+				pick.push(plane);
+			}
+			function animate(){
+      //碰撞
+				if(circle.position.x >= (49 - R) && v.x > 0){
+					circle.position.x = (49 - R);
+					v.x *= -1;
+				}
+				else if(circle.position.y >= (49 - R) && v.y > 0){
+					circle.position.y = (49 - R);
+					v.y *= -1;
+				}
+				else if(circle.position.x <= -(49 - R) && v.x < 0){
+					circle.position.x = -(49 - R);
+					v.x *= -1;
+				}
+				else if(circle.position.y <= -(49 - R) && v.y < 0){
+					circle.position.y = -(49 - R);
+					v.y *= -1;
+				}
+				circle.position.add(v);
+				//球所在位置
+				let data = {
+					circleX: circle.position.x,
+					circleY: circle.position.y,
+					circleR: R,
+					RecPosX: rect.position.x,
+					RecPosY: rect.position.y,
+					RecWidth: 20,
+					RecHeight: 10
+				};
+				
+				let param = $.param(data);
+				
+				
+				$.get('http://localhost:1337/api?' + param,function(data){
+					if(data.output == 1){
+						hitDom.html('hit');
+						circle.material.color.setHex(0xff0000);
+					}
+					else{						
+						hitDom.html('');
+						circle.material.color.setHex(0x0000ff);
+					}
+				})
+			
+				requestAnimationFrame(animate);
+				render();
+			}
+			
+			function render(){
+				renderer.render(scene,camera);
+			}
+		</script>
+	</body>
+</html>
